@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { t, isRTL, detectTextDirection } from './i18n.js';
 
 const PLATFORM_LABELS = {
@@ -25,6 +25,24 @@ export default function App() {
   const [lang, setLang] = useState('en');
 
   const rtl = isRTL(lang);
+  const hasAutoExtracted = useRef(false);
+
+  // Auto-extract when opened via iOS Shortcut share (with ?url= param)
+  useEffect(() => {
+    if (hasAutoExtracted.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const sharedUrl = params.get('url') || params.get('text');
+    if (sharedUrl) {
+      hasAutoExtracted.current = true;
+      setUrl(sharedUrl);
+      // Clean URL bar without reload
+      window.history.replaceState({}, '', window.location.pathname);
+      // Trigger extraction on next tick after state update
+      setTimeout(() => {
+        document.querySelector('.btn-primary')?.click();
+      }, 0);
+    }
+  }, []);
 
   const handleExtract = async () => {
     const trimmed = url.trim();
