@@ -57,12 +57,7 @@ export default function App() {
   // Auto-extract when opened via iOS Shortcut share (with ?url= param)
   useEffect(() => {
     if (hasAutoExtracted.current) return;
-    // DEBUG: show what the browser actually received
-    const fullUrl = window.location.href;
     const search = window.location.search;
-    if (search) {
-      alert('DEBUG full URL: ' + fullUrl);
-    }
     const urlMatch = search.match(/[?&]url=(.+)/);
     const textMatch = search.match(/[?&]text=(.+)/);
     const raw = urlMatch?.[1] || textMatch?.[1];
@@ -263,14 +258,27 @@ function RecipeResult({ data, lang, onAiParse }) {
           <h2 className="recipe-name" dir={detectTextDirection(recipe.title)}>{recipe.title}</h2>
         )}
 
-        {recipe?.ingredients?.length > 0 && (
+        {(recipe?.ingredientGroups?.length > 0 || recipe?.ingredients?.length > 0) && (
           <section className="recipe-card" dir={contentDir}>
             <h3>{t(lang, 'ingredients')}</h3>
-            <ul className="ingredient-list">
-              {recipe.ingredients.map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
+            {recipe.ingredientGroups?.length > 0 ? (
+              recipe.ingredientGroups.map((group, gi) => (
+                <div key={gi} className="ingredient-group">
+                  {group.group && <h4 className="ingredient-group-title">{group.group}</h4>}
+                  <ul className="ingredient-list">
+                    {group.items?.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))
+            ) : (
+              <ul className="ingredient-list">
+                {recipe.ingredients.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            )}
           </section>
         )}
 

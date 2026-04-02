@@ -331,6 +331,20 @@ body {
   font-size: 0.85rem;
 }
 
+.ingredient-group {
+  margin-bottom: 1rem;
+}
+.ingredient-group:last-child {
+  margin-bottom: 0;
+}
+.ingredient-group-title {
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0.5rem 0 0.3rem;
+  text-transform: capitalize;
+}
+
 .ingredient-list {
   list-style: none;
   display: flex;
