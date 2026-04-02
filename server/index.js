@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { extractRecipe } from './extractor.js';
+import { aiParseRecipe } from './aiParser.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -24,6 +25,21 @@ app.post('/api/extract', async (req, res) => {
   } catch (err) {
     console.error('Extraction failed:', err.message);
     return res.status(500).json({ error: 'Failed to extract recipe. The platform may be blocking requests or the URL is invalid.' });
+  }
+});
+
+app.post('/api/ai-parse', async (req, res) => {
+  const { rawText } = req.body;
+  if (!rawText || typeof rawText !== 'string') {
+    return res.status(400).json({ error: 'rawText is required.' });
+  }
+
+  try {
+    const recipe = await aiParseRecipe(rawText.trim());
+    return res.json({ recipe });
+  } catch (err) {
+    console.error('AI parse failed:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
 

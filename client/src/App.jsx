@@ -53,6 +53,32 @@ export default function App() {
     }
   };
 
+  const handleAiParse = async () => {
+    if (!result?.rawText) return;
+
+    setResult(prev => ({ ...prev, aiLoading: true, aiError: '' }));
+
+    try {
+      const resp = await fetch('/api/ai-parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawText: result.rawText }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'AI parsing failed');
+
+      setResult(prev => ({
+        ...prev,
+        recipe: data.recipe,
+        hasRecipe: true,
+        aiParsed: true,
+        aiLoading: false,
+      }));
+    } catch (err) {
+      setResult(prev => ({ ...prev, aiLoading: false, aiError: err.message }));
+    }
+  };
+
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
@@ -133,12 +159,12 @@ export default function App() {
 
       {error && <div className="error-card">{error}</div>}
 
-      {result && <RecipeResult data={result} lang={lang} />}
+      {result && <RecipeResult data={result} lang={lang} onAiParse={handleAiParse} />}
     </div>
   );
 }
 
-function RecipeResult({ data, lang }) {
+function RecipeResult({ data, lang, onAiParse }) {
   const platformColor = PLATFORM_COLORS[data.platform] || '#888';
   const platformLabel = PLATFORM_LABELS[data.platform] || data.platform;
   const { recipe } = data;
@@ -177,7 +203,31 @@ function RecipeResult({ data, lang }) {
         </div>
       )}
 
-      {!data.hasRecipe && (
+      {/* AI Parse button */}
+      {!data.aiParsed && (
+        <button
+          className="btn-ai"
+          onClick={onAiParse}
+          disabled={data.aiLoading}
+        >
+          {data.aiLoading ? (
+            <span className="spinner-wrap">
+              <span className="spinner" />
+              {t(lang, 'aiParsing')}
+            </span>
+          ) : (
+            t(lang, 'aiParse')
+          )}
+        </button>
+      )}
+
+      {data.aiParsed && (
+        <div className="ai-badge">{t(lang, 'aiParsed')}</div>
+      )}
+
+      {data.aiError && <div className="error-card">{data.aiError}</div>}
+
+      {!data.hasRecipe && !data.aiParsed && (
         <div className="warning-card">
           {t(lang, 'noRecipe')}
         </div>
@@ -185,6 +235,10 @@ function RecipeResult({ data, lang }) {
 
       {/* Recipe sections */}
       <div className="recipe-sections">
+        {recipe?.title && (
+          <h2 className="recipe-name" dir={detectTextDirection(recipe.title)}>{recipe.title}</h2>
+        )}
+
         {recipe?.ingredients?.length > 0 && (
           <section className="recipe-card" dir={contentDir}>
             <h3>{t(lang, 'ingredients')}</h3>
