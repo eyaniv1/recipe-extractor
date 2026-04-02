@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: recipe-extractor
+    runtime: node
+    buildCommand: npm install && cd server && npm install && cd ../client && npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production

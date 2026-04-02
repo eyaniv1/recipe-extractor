@@ -1,28 +1,50 @@
 import { useState } from 'react';
+import { t, isRTL, detectTextDirection } from './i18n.js';
 
-function App() {
+const PLATFORM_LABELS = {
+  youtube: 'YouTube',
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  facebook: 'Facebook',
+  other: 'Website',
+};
+
+const PLATFORM_COLORS = {
+  youtube: '#ff0000',
+  instagram: '#e1306c',
+  tiktok: '#00f2ea',
+  facebook: '#1877f2',
+  other: '#888',
+};
+
+export default function App() {
   const [url, setUrl] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lang, setLang] = useState('en');
 
-  const extract = async () => {
-    setError('');
-    setResult(null);
-    if (!url.trim()) {
-      setError('Please paste a video URL.');
+  const rtl = isRTL(lang);
+
+  const handleExtract = async () => {
+    const trimmed = url.trim();
+    if (!trimmed) {
+      setError(t(lang, 'errorEmpty'));
       return;
     }
 
+    setError('');
+    setResult(null);
     setLoading(true);
+
     try {
       const resp = await fetch('/api/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url.trim() })
+        body: JSON.stringify({ url: trimmed }),
       });
       const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || JSON.stringify(data));
+      if (!resp.ok) throw new Error(data.error || 'Extraction failed');
       setResult(data);
     } catch (err) {
       setError(err.message);
@@ -31,54 +53,173 @@ function App() {
     }
   };
 
-  const showList = (items) => {
-    if (!items?.length) return <small>No data found.</small>;
-    return <ul>{items.map((v, i) => <li key={i}>{v}</li>)}</ul>;
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setUrl(text.trim());
+        setError('');
+      }
+    } catch {
+      // Clipboard API not available — user can paste manually
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleExtract();
+  };
+
+  const handleClear = () => {
+    setUrl('');
+    setResult(null);
+    setError('');
   };
 
   return (
-    <div className="app">
-      <header>
-        <h1>Recipe Video Extractor</h1>
-        <p>Works with YouTube, Instagram, Facebook links.</p>
+    <div className="container" dir={rtl ? 'rtl' : 'ltr'}>
+      <button
+        className="lang-toggle"
+        onClick={() => setLang(lang === 'en' ? 'he' : 'en')}
+      >
+        {t(lang, 'langToggle')}
+      </button>
+
+      <header className="header">
+        <h1>{t(lang, 'title')}</h1>
+        <p className="subtitle">{t(lang, 'subtitle')}</p>
       </header>
 
-      <main>
-        <label htmlFor="url">Video URL</label>
-        <input
-          id="url"
-          placeholder="https://www.youtube.com/watch?v=..."
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
-        <button onClick={extract} disabled={loading}>{loading ? 'Extracting...' : 'Extract Recipe'}</button>
+      <div className="input-group">
+        <div className="input-row">
+          <input
+            type="url"
+            dir="ltr"
+            inputMode="url"
+            autoCapitalize="none"
+            autoCorrect="off"
+            placeholder={t(lang, 'placeholder')}
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
+          />
+          <button
+            className="btn-paste"
+            onClick={handlePaste}
+            title={t(lang, 'paste')}
+            type="button"
+          >
+            {t(lang, 'paste')}
+          </button>
+        </div>
+        <div className="button-row">
+          <button className="btn-primary" onClick={handleExtract} disabled={loading}>
+            {loading ? (
+              <span className="spinner-wrap">
+                <span className="spinner" />
+                {t(lang, 'extracting')}
+              </span>
+            ) : (
+              t(lang, 'extract')
+            )}
+          </button>
+          {(result || error) && (
+            <button className="btn-secondary" onClick={handleClear}>
+              {t(lang, 'clear')}
+            </button>
+          )}
+        </div>
+      </div>
 
-        {error && <div className="error">{error}</div>}
+      {error && <div className="error-card">{error}</div>}
 
-        {result && (
-          <section className="result">
-            <h2>Extraction Result</h2>
-            <p><strong>Platform:</strong> {result.platform}</p>
-            <p><strong>Title:</strong> {result.metadata?.title || 'n/a'}</p>
-            <p><strong>Source:</strong> <a href={result.sourceUrl} target="_blank" rel="noreferrer">{result.sourceUrl}</a></p>
-            <details>
-              <summary>Raw Text</summary>
-              <pre>{result.rawText}</pre>
-            </details>
-            <div>
-              <h3>Ingredients</h3>
-              {showList(result.recipe?.ingredients)}
-            </div>
-            <div>
-              <h3>Steps</h3>
-              {showList(result.recipe?.steps)}
-            </div>
-            {!result.hasRecipe && <div className="warning">No recipe structure detected. Try a detailed description link or paste manually.</div>}
-          </section>
-        )}
-      </main>
+      {result && <RecipeResult data={result} lang={lang} />}
     </div>
   );
 }
 
-export default App;
+function RecipeResult({ data, lang }) {
+  const platformColor = PLATFORM_COLORS[data.platform] || '#888';
+  const platformLabel = PLATFORM_LABELS[data.platform] || data.platform;
+  const { recipe } = data;
+
+  const contentDir = detectTextDirection(data.rawText);
+
+  return (
+    <div className="result">
+      {/* Platform badge + title */}
+      <div className="result-header">
+        <span className="platform-badge" style={{ backgroundColor: platformColor }}>
+          {platformLabel}
+        </span>
+        {data.title && <h2 className="result-title" dir={detectTextDirection(data.title)}>{data.title}</h2>}
+      </div>
+
+      {/* Video link */}
+      <a
+        href={data.videoUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="video-link"
+      >
+        {t(lang, 'watchVideo')} &rarr;
+      </a>
+
+      {/* YouTube embed */}
+      {data.embedUrl && (
+        <div className="embed-wrapper">
+          <iframe
+            src={data.embedUrl}
+            title="Video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      )}
+
+      {!data.hasRecipe && (
+        <div className="warning-card">
+          {t(lang, 'noRecipe')}
+        </div>
+      )}
+
+      {/* Recipe sections */}
+      <div className="recipe-sections">
+        {recipe?.ingredients?.length > 0 && (
+          <section className="recipe-card" dir={contentDir}>
+            <h3>{t(lang, 'ingredients')}</h3>
+            <ul className="ingredient-list">
+              {recipe.ingredients.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {recipe?.instructions?.length > 0 && (
+          <section className="recipe-card" dir={contentDir}>
+            <h3>{t(lang, 'instructions')}</h3>
+            <ol className="instruction-list">
+              {recipe.instructions.map((step, i) => (
+                <li key={i}>{step}</li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        {recipe?.description && (
+          <section className="recipe-card" dir={contentDir}>
+            <h3>{t(lang, 'description')}</h3>
+            <p className="description-text">{recipe.description}</p>
+          </section>
+        )}
+      </div>
+
+      {/* Raw text collapsible */}
+      <details className="raw-text-details">
+        <summary>{t(lang, 'showRaw')}</summary>
+        <pre dir={contentDir}>{data.rawText}</pre>
+      </details>
+    </div>
+  );
+}
