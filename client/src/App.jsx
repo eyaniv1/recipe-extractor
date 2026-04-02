@@ -57,8 +57,12 @@ export default function App() {
   // Auto-extract when opened via iOS Shortcut share (with ?url= param)
   useEffect(() => {
     if (hasAutoExtracted.current) return;
-    // Read everything after ?url= to handle URLs with special characters
+    // DEBUG: show what the browser actually received
+    const fullUrl = window.location.href;
     const search = window.location.search;
+    if (search) {
+      alert('DEBUG full URL: ' + fullUrl);
+    }
     const urlMatch = search.match(/[?&]url=(.+)/);
     const textMatch = search.match(/[?&]text=(.+)/);
     const raw = urlMatch?.[1] || textMatch?.[1];
