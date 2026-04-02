@@ -27,25 +27,8 @@ export default function App() {
   const rtl = isRTL(lang);
   const hasAutoExtracted = useRef(false);
 
-  // Auto-extract when opened via iOS Shortcut share (with ?url= param)
-  useEffect(() => {
-    if (hasAutoExtracted.current) return;
-    const params = new URLSearchParams(window.location.search);
-    const sharedUrl = params.get('url') || params.get('text');
-    if (sharedUrl) {
-      hasAutoExtracted.current = true;
-      setUrl(sharedUrl);
-      // Clean URL bar without reload
-      window.history.replaceState({}, '', window.location.pathname);
-      // Trigger extraction on next tick after state update
-      setTimeout(() => {
-        document.querySelector('.btn-primary')?.click();
-      }, 0);
-    }
-  }, []);
-
-  const handleExtract = async () => {
-    const trimmed = url.trim();
+  const doExtract = async (targetUrl) => {
+    const trimmed = targetUrl.trim();
     if (!trimmed) {
       setError(t(lang, 'errorEmpty'));
       return;
@@ -70,6 +53,25 @@ export default function App() {
       setLoading(false);
     }
   };
+
+  // Auto-extract when opened via iOS Shortcut share (with ?url= param)
+  useEffect(() => {
+    if (hasAutoExtracted.current) return;
+    // Read everything after ?url= to handle URLs with special characters
+    const search = window.location.search;
+    const urlMatch = search.match(/[?&]url=(.+)/);
+    const textMatch = search.match(/[?&]text=(.+)/);
+    const raw = urlMatch?.[1] || textMatch?.[1];
+    if (raw) {
+      const sharedUrl = decodeURIComponent(raw);
+      hasAutoExtracted.current = true;
+      setUrl(sharedUrl);
+      window.history.replaceState({}, '', window.location.pathname);
+      doExtract(sharedUrl);
+    }
+  }, []);
+
+  const handleExtract = () => doExtract(url);
 
   const handleAiParse = async () => {
     if (!result?.rawText) return;
