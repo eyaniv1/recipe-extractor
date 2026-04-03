@@ -172,13 +172,36 @@ function RecipeResult({ data, lang, onAiParse }) {
 
   const handleSave = async () => {
     const title = recipe?.title || data.title || 'Recipe';
-    const text = `${title}\n${data.videoUrl}`;
+    const parts = [title, ''];
+
+    if (recipe?.ingredientGroups?.length > 0) {
+      parts.push(t(lang, 'ingredients').toUpperCase(), '');
+      for (const group of recipe.ingredientGroups) {
+        if (group.group) parts.push(group.group + ':');
+        for (const item of group.items || []) parts.push('- ' + item);
+        parts.push('');
+      }
+    } else if (recipe?.ingredients?.length > 0) {
+      parts.push(t(lang, 'ingredients').toUpperCase(), '');
+      for (const item of recipe.ingredients) parts.push('- ' + item);
+      parts.push('');
+    }
+
+    if (recipe?.instructions?.length > 0) {
+      parts.push(t(lang, 'instructions').toUpperCase(), '');
+      recipe.instructions.forEach((step, i) => parts.push(`${i + 1}. ${step}`));
+      parts.push('');
+    }
+
+    parts.push(t(lang, 'watchVideo') + ': ' + data.videoUrl);
+
+    const text = parts.join('\n');
+
     if (navigator.share) {
       try {
-        await navigator.share({ title, text, url: data.videoUrl });
+        await navigator.share({ title, text });
       } catch { /* user cancelled */ }
     } else {
-      // Fallback: copy to clipboard
       await navigator.clipboard.writeText(text);
       alert('Copied to clipboard!');
     }
