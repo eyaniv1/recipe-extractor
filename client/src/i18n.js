@@ -17,6 +17,7 @@ const strings = {
     aiParsing: 'AI Parsing...',
     aiParsed: 'Parsed by AI',
     showRaw: 'Show raw extracted text',
+    save: 'Save Recipe',
     langToggle: 'עברית',
   },
   he: {
@@ -37,6 +38,7 @@ const strings = {
     aiParsing: 'מפענח...',
     aiParsed: 'פוענח ע"י AI',
     showRaw: 'הצג טקסט גולמי',
+    save: 'שמור מתכון',
     langToggle: 'English',
   },
 };

@@ -98,18 +98,6 @@ export default function App() {
     }
   };
 
-  const handlePaste = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) {
-        setUrl(text.trim());
-        setError('');
-      }
-    } catch {
-      // Clipboard API not available — user can paste manually
-    }
-  };
-
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleExtract();
   };
@@ -148,14 +136,6 @@ export default function App() {
             onKeyDown={handleKeyDown}
             disabled={loading}
           />
-          <button
-            className="btn-paste"
-            onClick={handlePaste}
-            title={t(lang, 'paste')}
-            type="button"
-          >
-            {t(lang, 'paste')}
-          </button>
         </div>
         <div className="button-row">
           <button className="btn-primary" onClick={handleExtract} disabled={loading}>
@@ -190,6 +170,20 @@ function RecipeResult({ data, lang, onAiParse }) {
 
   const contentDir = detectTextDirection(data.rawText);
 
+  const handleSave = async () => {
+    const title = recipe?.title || data.title || 'Recipe';
+    const text = `${title}\n${data.videoUrl}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url: data.videoUrl });
+      } catch { /* user cancelled */ }
+    } else {
+      // Fallback: copy to clipboard
+      await navigator.clipboard.writeText(text);
+      alert('Copied to clipboard!');
+    }
+  };
+
   return (
     <div className="result">
       {/* Platform badge + title */}
@@ -200,15 +194,20 @@ function RecipeResult({ data, lang, onAiParse }) {
         {data.title && <h2 className="result-title" dir={detectTextDirection(data.title)}>{data.title}</h2>}
       </div>
 
-      {/* Video link */}
-      <a
-        href={data.videoUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="video-link"
-      >
-        {t(lang, 'watchVideo')} &rarr;
-      </a>
+      {/* Video link + Save */}
+      <div className="result-actions">
+        <a
+          href={data.videoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="video-link"
+        >
+          {t(lang, 'watchVideo')} &rarr;
+        </a>
+        <button className="btn-save" onClick={handleSave}>
+          {t(lang, 'save')}
+        </button>
+      </div>
 
       {/* YouTube embed */}
       {data.embedUrl && (

@@ -263,21 +263,39 @@ body {
   word-break: break-word;
 }
 
+.result-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
 .video-link {
-  display: inline-block;
   color: var(--accent);
   text-decoration: none;
   font-weight: 500;
   font-size: 0.95rem;
-  margin-bottom: 1rem;
   transition: color 0.2s;
-  /* Mobile: decent tap target */
   padding: 0.25rem 0;
   min-height: 44px;
   display: flex;
   align-items: center;
 }
 .video-link:hover { color: var(--accent-hover); }
+
+.btn-save {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 44px;
+  transition: background 0.2s;
+}
+.btn-save:hover { background: var(--accent-hover); }
 
 /* Embed */
 .embed-wrapper {
