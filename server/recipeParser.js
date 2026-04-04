@@ -45,7 +45,7 @@ export function parseRecipe(text) {
 
     // In explicit sections, collect directly
     if (section === 'ingredients') {
-      const cleaned = line.replace(/^[-•*\u2022\u2023\u25E6\d.\s)]+/, '').trim();
+      const cleaned = line.replace(/^[-•*\u2022\u2023\u25E6]\s*/, '').trim();
       if (cleaned.length > 1) ingredients.push(cleaned);
       continue;
     }
@@ -67,7 +67,7 @@ export function parseRecipe(text) {
     const ingredientItemPattern = /^[-•*\u2022]\s+.+/;
 
     if (enMeasure.test(line) || heMeasure.test(line) || ingredientItemPattern.test(line)) {
-      const cleaned = line.replace(/^[-•*\u2022\u2023\u25E6\d.\s)]+/, '').trim();
+      const cleaned = line.replace(/^[-•*\u2022\u2023\u25E6]\s*/, '').trim();
       if (cleaned.length > 1) ingredients.push(cleaned);
       continue;
     }
