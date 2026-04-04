@@ -3,7 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { extractRecipe } from './extractor.js';
-import { aiParseRecipe } from './aiParser.js';
+import { aiParseRecipe, aiTranslateRecipe } from './aiParser.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -39,6 +39,21 @@ app.post('/api/ai-parse', async (req, res) => {
     return res.json({ recipe });
   } catch (err) {
     console.error('AI parse failed:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/translate', async (req, res) => {
+  const { recipe } = req.body;
+  if (!recipe || typeof recipe !== 'object') {
+    return res.status(400).json({ error: 'recipe object is required.' });
+  }
+
+  try {
+    const translated = await aiTranslateRecipe(recipe);
+    return res.json({ recipe: translated });
+  } catch (err) {
+    console.error('Translation failed:', err.message);
     return res.status(500).json({ error: err.message });
   }
 });

@@ -98,6 +98,31 @@ export default function App() {
     }
   };
 
+  const handleTranslate = async () => {
+    if (!result?.recipe) return;
+
+    setResult(prev => ({ ...prev, translateLoading: true, translateError: '' }));
+
+    try {
+      const resp = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipe: result.recipe }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Translation failed');
+
+      setResult(prev => ({
+        ...prev,
+        recipe: data.recipe,
+        translated: true,
+        translateLoading: false,
+      }));
+    } catch (err) {
+      setResult(prev => ({ ...prev, translateLoading: false, translateError: err.message }));
+    }
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleExtract();
   };
@@ -158,12 +183,12 @@ export default function App() {
 
       {error && <div className="error-card">{error}</div>}
 
-      {result && <RecipeResult data={result} lang={lang} onAiParse={handleAiParse} />}
+      {result && <RecipeResult data={result} lang={lang} onAiParse={handleAiParse} onTranslate={handleTranslate} />}
     </div>
   );
 }
 
-function RecipeResult({ data, lang, onAiParse }) {
+function RecipeResult({ data, lang, onAiParse, onTranslate }) {
   const platformColor = PLATFORM_COLORS[data.platform] || '#888';
   const platformLabel = PLATFORM_LABELS[data.platform] || data.platform;
   const { recipe } = data;
@@ -267,6 +292,30 @@ function RecipeResult({ data, lang, onAiParse }) {
       )}
 
       {data.aiError && <div className="error-card">{data.aiError}</div>}
+
+      {/* Translate button — show after recipe exists (AI parsed or detected) */}
+      {data.recipe && !data.translated && (
+        <button
+          className="btn-ai"
+          onClick={onTranslate}
+          disabled={data.translateLoading}
+        >
+          {data.translateLoading ? (
+            <span className="spinner-wrap">
+              <span className="spinner" />
+              {t(lang, 'translating')}
+            </span>
+          ) : (
+            t(lang, 'translate')
+          )}
+        </button>
+      )}
+
+      {data.translated && (
+        <div className="ai-badge">{t(lang, 'translated')}</div>
+      )}
+
+      {data.translateError && <div className="error-card">{data.translateError}</div>}
 
       {!data.hasRecipe && !data.aiParsed && (
         <div className="warning-card">

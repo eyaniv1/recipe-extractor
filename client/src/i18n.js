@@ -18,6 +18,9 @@ const strings = {
     aiParsed: 'Parsed by AI',
     showRaw: 'Show raw extracted text',
     save: 'Save Recipe',
+    translate: 'Translate to Hebrew',
+    translating: 'Translating...',
+    translated: 'Translated to Hebrew',
     langToggle: 'עברית',
   },
   he: {
@@ -39,6 +42,9 @@ const strings = {
     aiParsed: 'פוענח ע"י AI',
     showRaw: 'הצג טקסט גולמי',
     save: 'שמור מתכון',
+    translate: 'תרגם לעברית',
+    translating: 'מתרגם...',
+    translated: 'תורגם לעברית',
     langToggle: 'English',
   },
 };
