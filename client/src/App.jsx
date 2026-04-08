@@ -54,15 +54,19 @@ export default function App() {
     }
   };
 
-  // Auto-extract when opened via iOS Shortcut share (with ?url= param)
+  // Auto-extract when opened via share (iOS Shortcut or Android PWA share target)
   useEffect(() => {
     if (hasAutoExtracted.current) return;
-    const search = window.location.search;
-    const urlMatch = search.match(/[?&]url=(.+)/);
-    const textMatch = search.match(/[?&]text=(.+)/);
-    const raw = urlMatch?.[1] || textMatch?.[1];
-    if (raw) {
-      const sharedUrl = decodeURIComponent(raw);
+    const params = new URLSearchParams(window.location.search);
+    // Try ?url= first, then ?text= (Android often puts URL in text param)
+    let sharedUrl = params.get('url') || '';
+    if (!sharedUrl) {
+      const text = params.get('text') || '';
+      // Extract URL from shared text (may contain extra text around it)
+      const urlInText = text.match(/https?:\/\/[^\s]+/);
+      sharedUrl = urlInText ? urlInText[0] : '';
+    }
+    if (sharedUrl) {
       hasAutoExtracted.current = true;
       setUrl(sharedUrl);
       window.history.replaceState({}, '', window.location.pathname);

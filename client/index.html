@@ -9,11 +9,17 @@
     <meta name="description" content="Extract recipes from YouTube, Instagram, TikTok and Facebook videos" />
     <title>Recipe Extractor</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍳</text></svg>" />
+    <link rel="manifest" href="/manifest.json" />
   </head>
   <body>
     <div id="root">
       <p style="text-align:center;margin-top:40vh;font-family:system-ui,sans-serif;color:#aaa;font-size:1.1rem;">Loading...</p>
     </div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+      }
+    </script>
   </body>
 </html>
