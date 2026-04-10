@@ -30,8 +30,9 @@ Rules:
   - For other dry ingredients, approximate 1 cup ≈ 130g
   - Use friendly fractions: ½, ⅓, ¼, ⅔, ¾ instead of decimals
   - IMPORTANT: Write conversions in natural order — quantity BEFORE unit, largest unit first. Correct: "(≈ ⅓ cup + 2 tbsp)". Wrong: "(≈ cup + 2 tbsp ⅓)".
-  - When possible, simplify to a single unit instead of combining (e.g. "≈ ½ cup" instead of "≈ ⅓ cup + 2 tbsp + 2 tsp")
-  Examples: "500 גרם קמח (≈ 4 cups)", "100g oil (≈ ½ cup)", "30g butter (≈ 2 tbsp)"
+  - Be precise — do NOT simplify or round the conversions. Show the exact breakdown.
+  - IMPORTANT for RTL display: Start EVERY parenthetical conversion with the Unicode LTR mark \u200E so it displays correctly in Hebrew/RTL text. Write it as: "(\u200E≈ ⅓ cup + 2 tbsp)"
+  Examples: "500 גרם קמח (\u200E≈ 4 cups)", "100g oil (\u200E≈ ⅓ cup + 2 tbsp)", "30g butter (\u200E≈ 2 tbsp)"
 - Break instructions into clear numbered steps
 - Keep each ingredient on its own line, preserving quantities and units
 - Keep the original language of the recipe (do not translate)
