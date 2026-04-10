@@ -29,7 +29,9 @@ Rules:
   - 1 oz ≈ 28g, 1 lb ≈ 454g
   - For other dry ingredients, approximate 1 cup ≈ 130g
   - Use friendly fractions: ½, ⅓, ¼, ⅔, ¾ instead of decimals
-  Example: "500 גרם קמח (≈ 4 cups)" or "8 oz butter (≈ 1 cup)"
+  - IMPORTANT: Write conversions in natural order — quantity BEFORE unit, largest unit first. Correct: "(≈ ⅓ cup + 2 tbsp)". Wrong: "(≈ cup + 2 tbsp ⅓)".
+  - When possible, simplify to a single unit instead of combining (e.g. "≈ ½ cup" instead of "≈ ⅓ cup + 2 tbsp + 2 tsp")
+  Examples: "500 גרם קמח (≈ 4 cups)", "100g oil (≈ ½ cup)", "30g butter (≈ 2 tbsp)"
 - Break instructions into clear numbered steps
 - Keep each ingredient on its own line, preserving quantities and units
 - Keep the original language of the recipe (do not translate)
