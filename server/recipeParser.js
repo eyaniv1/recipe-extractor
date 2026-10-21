@@ -29,16 +29,18 @@ export function parseRecipe(text) {
       continue;
     }
 
-    // Detect section headers (Hebrew)
-    if (/^#{0,3}\s*(מצרכים|חומרים|רכיבים)\s*[:\-]?\s*$/i.test(line)) {
+    // Detect section headers (Hebrew). Allow an optional trailing noun phrase
+    // (e.g. "חומרים לבצק", "תהליך הכנת העוגה") before the colon so real-world
+    // captions that don't use the bare keyword are still recognized.
+    if (/^#{0,3}\s*(מצרכים|חומרים|רכיבים)(\s+[^:\n]{1,20})?\s*[:\-]?\s*$/i.test(line)) {
       section = 'ingredients';
       continue;
     }
-    if (/^#{0,3}\s*(הוראות הכנה|הוראות|אופן ההכנה|אופן הכנה|הכנה|שלבים|שלבי הכנה)\s*[:\-]?\s*$/i.test(line)) {
+    if (/^#{0,3}\s*(הוראות הכנה|הוראות|אופן ההכנה|אופן הכנה|אופן הכנת|אופן|תהליך ההכנה|תהליך הכנת|תהליך|שלבי הכנה|שלבים|ההכנה|הכנה)(\s+[^:\n]{1,20})?\s*[:\-]?\s*$/i.test(line)) {
       section = 'instructions';
       continue;
     }
-    if (/^#{0,3}\s*(תיאור|הערות|הקדמה|על המתכון)\s*[:\-]?\s*$/i.test(line)) {
+    if (/^#{0,3}\s*(תיאור|הערות|הקדמה|על המתכון)(\s+[^:\n]{1,20})?\s*[:\-]?\s*$/i.test(line)) {
       section = 'description';
       continue;
     }
@@ -50,7 +52,7 @@ export function parseRecipe(text) {
       continue;
     }
     if (section === 'instructions') {
-      const cleaned = line.replace(/^\d+[.)]\s*/, '').trim();
+      const cleaned = line.replace(/^[-•*•‣◦]\s*/, '').replace(/^\d+[.)]\s*/, '').trim();
       if (cleaned.length > 1) instructions.push(cleaned);
       continue;
     }
@@ -79,7 +81,7 @@ export function parseRecipe(text) {
     const heAction = /\b(לחמם|לערבב|לבחוש|להקציף|לאפות|לבשל|להרתיח|לטגן|לקצוץ|לחתוך|לפרוס|לקפל|ללוש|להשרות|לתבל|לקשט|להגיש|לשפוך|למרוח|לחמם|לצלות|לטחון|לסנן|לשטוף|להוסיף|להניח|להעביר|מערבבים|מוסיפים|שמים|מחממים|אופים|מבשלים|מטגנים|חותכים|מקציפים|מגישים|שופכים|מערבבים|טוחנים|מורחים)\b/;
 
     if (stepPattern.test(line) || enAction.test(line) || heAction.test(line)) {
-      const cleaned = line.replace(/^\d+[.)]\s*/, '').trim();
+      const cleaned = line.replace(/^[-•*•‣◦]\s*/, '').replace(/^\d+[.)]\s*/, '').trim();
       if (cleaned.length > 1) instructions.push(cleaned);
       continue;
     }
