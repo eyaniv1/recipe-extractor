@@ -176,14 +176,25 @@ async function extractTikTok(url) {
 // --- Facebook ---
 
 async function extractFacebook(url) {
-  const { data: html } = await axios.get(url, {
-    timeout: TIMEOUT,
-    headers: { ...HEADERS, 'User-Agent': 'facebookexternalhit/1.1' },
-  });
+  let rawTitle = '';
+  let rawDescription = '';
 
-  const $ = cheerio.load(html);
-  const rawTitle = $('meta[property="og:title"]').attr('content') || '';
-  const rawDescription = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content') || '';
+  try {
+    const { data: html } = await axios.get(url, {
+      timeout: TIMEOUT,
+      headers: { ...HEADERS, 'User-Agent': 'facebookexternalhit/1.1' },
+    });
+    const $ = cheerio.load(html);
+    rawTitle = $('meta[property="og:title"]').attr('content') || '';
+    rawDescription = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content') || '';
+  } catch { /* fall back to reader proxy below */ }
+
+  // Facebook serves datacenter IPs (e.g. our Render host) an empty page with no
+  // og tags. When the direct fetch yields nothing, retry through a reader proxy
+  // that fetches from different infrastructure.
+  if (!rawTitle && !rawDescription) {
+    rawTitle = await fetchViaReaderProxy(url);
+  }
 
   // Facebook reel og:title now looks like:
   //   "40K views · 2.1K reactions | <caption...> | <Page Name>"
@@ -211,6 +222,27 @@ function extractFacebookAuthor(ogTitle) {
   const pipeMatch = ogTitle.match(/\|\s*([^|]+?)\s*$/);
   if (pipeMatch) return pipeMatch[1].trim();
   return '';
+}
+
+/**
+ * Fetch a page's og:title via the Jina AI reader proxy (r.jina.ai). Used as a
+ * fallback when a direct request is blocked by the target (e.g. Facebook
+ * returning an empty page to datacenter IPs). The reader returns plain text
+ * beginning with "Title: <og:title>\n\nURL Source: ...\n\nMarkdown Content:".
+ * We return the Title block, which for Facebook reels holds the full caption.
+ */
+async function fetchViaReaderProxy(url) {
+  const headers = { 'Accept': 'text/plain', 'X-Return-Format': 'markdown' };
+  if (process.env.JINA_API_KEY) headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`;
+
+  try {
+    const { data } = await axios.get(`https://r.jina.ai/${url}`, { timeout: 30000, headers });
+    if (typeof data !== 'string') return '';
+    const match = data.match(/^Title:\s*([\s\S]*?)\n\s*(?:URL Source:|Markdown Content:)/);
+    return match ? match[1].trim() : '';
+  } catch {
+    return '';
+  }
 }
 
 function escapeRegExp(s) {
