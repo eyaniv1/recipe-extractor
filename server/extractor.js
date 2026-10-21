@@ -182,13 +182,20 @@ async function extractFacebook(url) {
   });
 
   const $ = cheerio.load(html);
-  const title = $('meta[property="og:title"]').attr('content') || '';
-  const description = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content') || '';
+  const rawTitle = $('meta[property="og:title"]').attr('content') || '';
+  const rawDescription = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content') || '';
+
+  // Facebook reel og:title now looks like:
+  //   "40K views · 2.1K reactions | <caption...> | <Page Name>"
+  // The page name is the display title; strip the engagement-stats prefix and
+  // the trailing page name so they don't pollute the extracted recipe.
+  const displayTitle = extractFacebookAuthor(rawTitle);
+  const title = cleanFacebookNoise(rawTitle, displayTitle);
+  const description = cleanFacebookNoise(rawDescription, displayTitle);
 
   // Facebook often duplicates: title has the full text, description has a truncated copy.
   // Use the longer one and deduplicate.
   const rawText = deduplicateText(title, description);
-  const displayTitle = extractFacebookAuthor(title);
 
   return {
     platform: 'facebook',
@@ -204,6 +211,34 @@ function extractFacebookAuthor(ogTitle) {
   const pipeMatch = ogTitle.match(/\|\s*([^|]+?)\s*$/);
   if (pipeMatch) return pipeMatch[1].trim();
   return '';
+}
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Strip Facebook engagement-stats noise from og:title / og:description so it
+ * doesn't leak into the recipe text. Removes a leading
+ * "40K views · 2.1K reactions | " style prefix and a trailing " | Page Name".
+ */
+function cleanFacebookNoise(text, author) {
+  if (!text) return '';
+  let t = text;
+
+  // Leading engagement stats, e.g. "40K views · 2.1K reactions | " /
+  // "1.2M plays · 10K likes · 300 comments | "
+  t = t.replace(
+    /^\s*(?:[\d.,]+\s*[KMB]?\s*(?:views?|reactions?|likes?|comments?|shares?|plays?)\b\s*[·•,]?\s*)+\|?\s*/i,
+    ''
+  );
+
+  // Trailing " | Page Name" (the display title appended at the very end).
+  if (author) {
+    t = t.replace(new RegExp('\\s*\\|\\s*' + escapeRegExp(author) + '\\s*$'), '');
+  }
+
+  return t.trim();
 }
 
 // --- Generic ---
